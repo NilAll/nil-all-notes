@@ -7,134 +7,102 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .note-content {
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        .expanded .note-content {
-            -webkit-line-clamp: unset;
-        }
+        .note-content { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; transition: all 0.3s ease; }
+        .expanded .note-content { -webkit-line-clamp: unset; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 md:p-8">
+<body class="bg-slate-50 min-h-screen p-4">
 
     <div class="max-w-2xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">Nil All Notes</h1>
+        <h1 class="text-3xl font-black text-slate-800 mb-8 text-center tracking-tighter uppercase">Nil All Notes</h1>
 
-        <div class="bg-white p-4 rounded-xl shadow-sm mb-6 space-y-4">
+        <div class="bg-white p-4 rounded-2xl shadow-xl shadow-slate-200/50 mb-6 space-y-4 border border-slate-100">
             <div class="flex gap-2">
-                <input type="text" id="noteInput" placeholder="Escreva sua anotação..." 
-                    class="flex-1 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="addNote()" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition">
-                    <i data-lucide="plus"></i>
+                <input type="text" id="noteInput" placeholder="Nova anotação..." 
+                    class="flex-1 border-none bg-slate-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                <button id="btnSave" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl transition-all shadow-lg shadow-blue-200">
+                    <i data-lucide="send-horizontal"></i>
                 </button>
             </div>
             
             <div class="relative">
-                <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-400 w-5 h-5"></i>
-                <input type="text" id="searchInput" oninput="filterNotes()" placeholder="Pesquisar anotações..." 
-                    class="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none border border-transparent focus:border-gray-200">
+                <i data-lucide="search" class="absolute left-3 top-3 text-slate-400 w-5 h-5"></i>
+                <input type="text" id="searchInput" placeholder="Pesquisar..." 
+                    class="w-full pl-10 pr-4 py-2 bg-transparent border-b border-slate-100 focus:border-blue-400 outline-none transition-colors">
             </div>
         </div>
 
-        <div id="notesList" class="space-y-2">
-            </div>
+        <div id="notesList" class="space-y-3"></div>
     </div>
 
-    <script>
-        let notes = JSON.parse(localStorage.getItem('nil_notes')) || [];
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
-        function saveToStorage() {
-            localStorage.setItem('nil_notes', JSON.stringify(notes));
-            renderNotes();
-        }
+        // Dados extraídos da sua captura de tela
+        const firebaseConfig = {
+          apiKey: "AIzaSyD8e6Gu14aFRvJ6X3D9KMTR2TuKNle1d64",
+          authDomain: "nil-all-notes.firebaseapp.com",
+          projectId: "nil-all-notes",
+          storageBucket: "nil-all-notes.firebasestorage.app",
+          messagingSenderId: "1084758336098",
+          appId: "1:1084758336098:web:1d5c34238ee9f446d4863f",
+          measurementId: "G-LQHC7PVQL5"
+        };
 
-        function addNote() {
-            const input = document.getElementById('noteInput');
-            if (input.value.trim() === "") return;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
+        const colRef = collection(db, "notes");
 
-            const newNote = {
-                id: Date.now(),
-                text: input.value,
+        const noteInput = document.getElementById('noteInput');
+        const btnSave = document.getElementById('btnSave');
+        const notesList = document.getElementById('notesList');
+        const searchInput = document.getElementById('searchInput');
+
+        btnSave.onclick = async () => {
+            if (noteInput.value.trim() === "") return;
+            await addDoc(colRef, {
+                text: noteInput.value,
                 locked: false,
-                date: new Date().toLocaleString()
-            };
+                createdAt: Date.now()
+            });
+            noteInput.value = "";
+        };
 
-            notes.unshift(newNote); // Adiciona no topo
-            input.value = "";
-            saveToStorage();
-        }
+        const q = query(colRef, orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            render(notes);
+        });
 
-        function deleteNote(id) {
-            if(confirm("Deseja excluir esta nota?")) {
-                notes = notes.filter(n => n.id !== id);
-                saveToStorage();
-            }
-        }
+        function render(notes) {
+            const term = searchInput.value.toLowerCase();
+            notesList.innerHTML = "";
 
-        function toggleLock(id) {
-            notes = notes.map(n => n.id === id ? {...n, locked: !n.locked} : n);
-            saveToStorage();
-        }
-
-        function editNote(id) {
-            const note = notes.find(n => n.id === id);
-            const newText = prompt("Editar anotação:", note.text);
-            if (newText !== null) {
-                notes = notes.map(n => n.id === id ? {...n, text: newText} : n);
-                saveToStorage();
-            }
-        }
-
-        function toggleExpand(element) {
-            element.classList.toggle('expanded');
-        }
-
-        function filterNotes() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            renderNotes(term);
-        }
-
-        function renderNotes(filter = "") {
-            const list = document.getElementById('notesList');
-            list.innerHTML = "";
-
-            const filteredNotes = notes.filter(n => n.text.toLowerCase().includes(filter));
-
-            filteredNotes.forEach(note => {
+            notes.filter(n => n.text.toLowerCase().includes(term)).forEach(note => {
                 const div = document.createElement('div');
-                div.className = `bg-white border-b border-gray-100 p-4 flex items-center justify-between hover:bg-gray-50 transition cursor-pointer group`;
-                div.onclick = (e) => {
-                    // Evita expandir se clicar nos botões
-                    if (!e.target.closest('button')) toggleExpand(div);
-                };
+                div.className = "bg-white p-4 rounded-xl flex items-center justify-between group cursor-pointer border border-transparent hover:border-blue-100 shadow-sm transition-all";
+                div.onclick = (e) => { if(!e.target.closest('button')) div.classList.toggle('expanded') };
 
                 div.innerHTML = `
                     <div class="flex-1 pr-4">
-                        <p class="note-content text-gray-700 ${note.locked ? 'blur-sm select-none' : ''}">${note.text}</p>
+                        <p class="note-content text-slate-700 ${note.locked ? 'blur-md select-none' : ''}">${note.text}</p>
                     </div>
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="toggleLock(${note.id})" class="p-1 text-gray-500 hover:text-blue-600" title="Bloquear/Ocultar">
-                            <i data-lucide="${note.locked ? 'eye-off' : 'eye'}" class="w-5 h-5"></i>
-                        </button>
-                        <button onclick="editNote(${note.id})" class="p-1 text-gray-500 hover:text-green-600" title="Editar">
-                            <i data-lucide="edit-3" class="w-5 h-5"></i>
-                        </button>
-                        <button onclick="deleteNote(${note.id})" class="p-1 text-gray-500 hover:text-red-600" title="Excluir">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
+                    <div class="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="window.tglLock('${note.id}', ${note.locked})" class="p-2 text-slate-400 hover:text-blue-500"><i data-lucide="${note.locked ? 'eye-off' : 'eye'}" class="w-5 h-5"></i></button>
+                        <button onclick="window.delNote('${note.id}')" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                     </div>
                 `;
-                list.appendChild(div);
+                notesList.appendChild(div);
             });
             lucide.createIcons();
         }
 
-        // Inicializar
-        renderNotes();
+        window.delNote = async (id) => { if(confirm("Apagar nota?")) await deleteDoc(doc(db, "notes", id)); };
+        window.tglLock = async (id, status) => { await updateDoc(doc(db, "notes", id), { locked: !status }); };
+        searchInput.oninput = () => { /* renderiza via onSnapshot */ };
     </script>
 </body>
 </html>
