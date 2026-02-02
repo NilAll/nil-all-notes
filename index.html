@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nil All Notes - Admin Panel</title>
+    <title>Nil All Notes - Slim</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
     <style>
         .note-content { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; transition: all 0.2s; }
         .expanded .note-content { -webkit-line-clamp: unset; }
-        .drag-over-group { border: 2px solid #3b82f6 !important; background-color: rgba(59, 130, 246, 0.05); }
+        .drag-over-group { border: 1px solid #3b82f6 !important; background-color: rgba(59, 130, 246, 0.05); }
         .dragging { opacity: 0.3; }
         .child-container { display: none; width: 100%; }
         .is-open + .child-container { display: block; }
-        /* Sidebar Transition */
         #adminSidebar { transition: transform 0.3s ease-in-out; }
     </style>
 </head>
@@ -22,58 +21,48 @@
 
     <div id="adminSidebar" class="fixed top-0 right-0 h-full w-64 bg-slate-900 border-l border-slate-800 z-50 translate-x-full shadow-2xl p-6">
         <div class="flex justify-between items-center mb-8">
-            <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="shield-check"></i> Admin</h2>
+            <h2 class="text-lg font-medium flex items-center gap-2"><i data-lucide="shield-check"></i> Admin</h2>
             <button onclick="toggleAdmin()"><i data-lucide="x" class="text-slate-400"></i></button>
         </div>
-        <nav class="space-y-4">
-            <button onclick="alert('Backup realizado!')" class="w-full flex items-center gap-3 p-3 hover:bg-slate-800 rounded-xl transition text-sm">
-                <i data-lucide="download" class="w-4 h-4"></i> Exportar JSON
+        <nav class="space-y-4 text-sm text-slate-400">
+            <button onclick="alert('Exportando...')" class="w-full flex items-center gap-3 p-2 hover:text-white transition">
+                <i data-lucide="download" class="w-4 h-4"></i> Exportar Dados
             </button>
-            <button class="w-full flex items-center gap-3 p-3 hover:bg-slate-800 rounded-xl transition text-sm">
-                <i data-lucide="users" class="w-4 h-4"></i> Usuários (Em breve)
-            </button>
-            <div class="border-t border-slate-800 pt-4 mt-4">
-                <p class="text-[10px] text-slate-500 uppercase tracking-widest px-3">Status do Banco</p>
-                <div class="flex items-center gap-2 px-3 mt-2 text-green-500 text-xs">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Firestore Conectado
-                </div>
-            </div>
         </nav>
     </div>
 
     <div class="max-w-3xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <h1 class="text-2xl font-black text-white tracking-tighter uppercase whitespace-nowrap">Nil All Notes</h1>
+        <div class="flex items-center justify-between gap-3 mb-6">
+            <h1 class="text-lg md:text-xl font-medium text-white tracking-tight uppercase whitespace-nowrap">Nil All Notes</h1>
             
-            <div class="flex flex-1 items-center gap-2 max-w-md w-full">
-                <div class="relative flex-1">
-                    <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-500 w-4 h-4"></i>
+            <div class="flex flex-1 items-center gap-2 justify-end">
+                <div class="relative w-full max-w-[150px] md:max-w-xs">
+                    <i data-lucide="search" class="absolute left-2.5 top-2 text-slate-500 w-3.5 h-3.5"></i>
                     <input type="text" id="searchInput" placeholder="Buscar..." 
-                        class="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all">
+                        class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs outline-none focus:border-blue-500 text-white transition-all">
                 </div>
-                <button onclick="toggleAdmin()" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-white hover:bg-slate-800 transition-colors">
-                    <i data-lucide="menu" class="w-5 h-5"></i>
+                <button onclick="toggleAdmin()" class="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="menu" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
 
-        <div class="bg-slate-900 p-4 rounded-2xl shadow-xl mb-8 border border-slate-800">
-            <div class="flex gap-2">
-                <input type="text" id="noteInput" placeholder="Nova anotação..." 
-                    class="flex-1 bg-slate-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
-                <button id="btnSave" class="bg-blue-600 text-white px-5 rounded-xl hover:bg-blue-700 transition-colors">
-                    <i data-lucide="plus"></i>
-                </button>
-            </div>
+        <div class="flex gap-2 mb-8 items-center">
+            <input type="text" id="noteInput" placeholder="Nova anotação..." 
+                class="flex-1 bg-transparent border-b border-slate-800 text-white px-2 py-2 outline-none focus:border-blue-500 text-sm transition-colors">
+            <button id="btnSave" class="text-blue-500 hover:text-blue-400 p-2 transition-colors">
+                <i data-lucide="plus-circle" class="w-6 h-6"></i>
+            </button>
         </div>
 
-        <div id="notesList" class="space-y-3 pb-20"></div>
+        <div id="notesList" class="space-y-2 pb-20"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Credenciais do seu projeto
         const firebaseConfig = {
           apiKey: "AIzaSyD8e6Gu14aFRvJ6X3D9KMTR2TuKNle1d64",
           authDomain: "nil-all-notes.firebaseapp.com",
@@ -90,11 +79,7 @@
         let draggedId = null;
         let allNotesData = [];
 
-        // Toggle Admin Sidebar
-        window.toggleAdmin = () => {
-            const sb = document.getElementById('adminSidebar');
-            sb.classList.toggle('translate-x-full');
-        };
+        window.toggleAdmin = () => document.getElementById('adminSidebar').classList.toggle('translate-x-full');
 
         async function saveNote() {
             const input = document.getElementById('noteInput');
@@ -117,15 +102,7 @@
             list.innerHTML = "";
             const term = document.getElementById('searchInput').value.toLowerCase();
 
-            const filteredRoot = notes.filter(n => {
-                if (n.parentId) return false;
-                if (!term) return true;
-                const hasTerm = n.text.toLowerCase().includes(term);
-                const childHasTerm = notes.some(c => c.parentId === n.id && c.text.toLowerCase().includes(term));
-                return hasTerm || childHasTerm;
-            });
-
-            filteredRoot.forEach(note => {
+            notes.filter(n => !n.parentId && (n.text.toLowerCase().includes(term) || notes.some(c => c.parentId === n.id && c.text.toLowerCase().includes(term)))).forEach(note => {
                 list.appendChild(createNoteElement(note, notes));
             });
             lucide.createIcons();
@@ -136,7 +113,7 @@
             container.className = "flex flex-col w-full";
             
             const card = document.createElement('div');
-            card.className = `p-4 rounded-xl border-2 ${note.isGroup ? 'border-blue-500 bg-blue-900/10' : 'border-slate-800'} bg-slate-900 transition-all cursor-grab active:cursor-grabbing shadow-sm w-full relative group`;
+            card.className = `px-3 py-2.5 rounded-lg border ${note.isGroup ? 'border-blue-600/50 bg-blue-900/5' : 'border-slate-900'} bg-slate-900/50 hover:border-slate-800 transition-all cursor-grab active:cursor-grabbing w-full relative group`;
             card.draggable = true;
 
             card.ondragstart = (e) => { draggedId = note.id; card.classList.add('dragging'); e.stopPropagation(); };
@@ -150,7 +127,7 @@
                 if (note.isGroup) {
                     await updateDoc(doc(db, "notes", draggedId), { parentId: note.id });
                 } else {
-                    const name = prompt("Nome do novo grupo:");
+                    const name = prompt("Nome do Grupo:");
                     if (name) {
                         await updateDoc(doc(db, "notes", note.id), { isGroup: true, text: name });
                         await updateDoc(doc(db, "notes", draggedId), { parentId: note.id });
@@ -170,13 +147,13 @@
             card.innerHTML = `
                 <div class="flex items-start justify-between">
                     <div class="flex-1 overflow-hidden pr-2">
-                        <p class="note-content font-medium text-slate-200 ${note.locked ? 'blur-md select-none' : ''}">${note.text}</p>
-                        <div class="text-[8px] text-slate-600 mt-1 uppercase tracking-tighter">${dateStr}</div>
+                        <p class="note-content text-sm text-slate-300 ${note.locked ? 'blur-md select-none' : ''}">${note.text}</p>
+                        <div class="text-[7px] text-slate-600 mt-0.5 uppercase tracking-tighter">${dateStr}</div>
                     </div>
                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="window.editNote('${note.id}', \`${note.text.replace(/`/g, '\\`')}\`)" class="p-1 text-slate-500 hover:text-green-500"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                        <button onclick="window.tglLock('${note.id}', ${note.locked})" class="p-1 text-slate-500 hover:text-blue-500"><i data-lucide="${note.locked ? 'eye-off' : 'eye'}" class="w-4 h-4"></i></button>
-                        <button onclick="window.delNote('${note.id}')" class="p-1 text-slate-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick="window.editNote('${note.id}', \`${note.text.replace(/`/g, '\\`')}\`)" class="p-1 text-slate-600 hover:text-green-500"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="window.tglLock('${note.id}', ${note.locked})" class="p-1 text-slate-600 hover:text-blue-500"><i data-lucide="${note.locked ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="window.delNote('${note.id}')" class="p-1 text-slate-600 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                     </div>
                 </div>
             `;
@@ -185,7 +162,7 @@
 
             if (note.isGroup) {
                 const subList = document.createElement('div');
-                subList.className = "child-container w-full mt-2 space-y-2 border-l-2 border-blue-900 ml-2 pl-2";
+                subList.className = "child-container w-full mt-1.5 space-y-1.5 border-l border-blue-900/50 ml-2 pl-3";
                 allNotes.filter(n => n.parentId === note.id).forEach(child => {
                     subList.appendChild(createNoteElement(child, allNotes));
                 });
