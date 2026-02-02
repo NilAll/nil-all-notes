@@ -1,0 +1,21 @@
+{
+  "short_name": "NilNotes",
+  "name": "Nil All Notes",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "index.html",
+  "display": "standalone",
+  "theme_color": "#020617",
+  "background_color": "#020617"
+}
