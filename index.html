@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nil All Notes - Security Pro</title>
+    <title>Nil All Notes</title>
+    
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#020617">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
@@ -25,16 +32,14 @@
             <button onclick="toggleAdmin()"><i data-lucide="x" class="text-slate-400"></i></button>
         </div>
         <nav class="space-y-4 text-sm text-slate-400">
-            <button onclick="setupPassword()" class="w-full flex items-center gap-3 p-2 hover:text-white transition">
+            <button onclick="setupPassword()" class="w-full flex items-center gap-3 p-2 hover:text-white transition text-left">
                 <i data-lucide="key-round" class="w-4 h-4"></i> Configurar Senha
             </button>
-            <button onclick="recoverPassword()" class="w-full flex items-center gap-3 p-2 hover:text-white transition">
+            <button onclick="recoverPassword()" class="w-full flex items-center gap-3 p-2 hover:text-white transition text-left">
                 <i data-lucide="help-circle" class="w-4 h-4"></i> Recuperar Senha
             </button>
-            <div class="border-t border-slate-800 pt-4 mt-4">
-                <button onclick="alert('Exportando...')" class="w-full flex items-center gap-3 p-2 hover:text-white transition">
-                    <i data-lucide="download" class="w-4 h-4"></i> Exportar Dados
-                </button>
+            <div class="border-t border-slate-800 pt-4 mt-4 text-[10px] text-slate-500 uppercase px-2">
+                Sistema Nil All Notes v2.0
             </div>
         </nav>
     </div>
@@ -42,6 +47,7 @@
     <div class="max-w-3xl mx-auto">
         <div class="flex items-center justify-between gap-3 mb-6">
             <h1 class="text-lg md:text-xl font-medium text-white tracking-tight uppercase whitespace-nowrap">Nil All Notes</h1>
+            
             <div class="flex flex-1 items-center gap-2 justify-end">
                 <div class="relative w-full max-w-[150px] md:max-w-xs">
                     <i data-lucide="search" class="absolute left-2.5 top-2 text-slate-500 w-3.5 h-3.5"></i>
@@ -69,6 +75,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Suas Credenciais do Firebase
         const firebaseConfig = {
           apiKey: "AIzaSyD8e6Gu14aFRvJ6X3D9KMTR2TuKNle1d64",
           authDomain: "nil-all-notes.firebaseapp.com",
@@ -84,33 +91,28 @@
 
         let draggedId = null;
         let allNotesData = [];
-        let revealedNotes = new Set(); // IDs de notas desbloqueadas temporariamente na sessão
+        let revealedNotes = new Set();
 
         window.toggleAdmin = () => document.getElementById('adminSidebar').classList.toggle('translate-x-full');
 
-        // Segurança
+        // Lógica de Senha
         window.setupPassword = () => {
-            const pass = prompt("Defina sua nova senha:");
+            const pass = prompt("Defina sua senha:");
             if (!pass) return;
-            const question = prompt("Pergunta secreta para recuperação (ex: Nome do meu pet):");
-            const answer = prompt("Resposta da pergunta secreta:");
-            
+            const q = prompt("Pergunta de recuperação (ex: Cidade que nasceu):");
+            const a = prompt("Resposta:");
             localStorage.setItem('nil_pass', pass);
-            localStorage.setItem('nil_question', question);
-            localStorage.setItem('nil_answer', answer);
-            alert("Segurança configurada com sucesso!");
+            localStorage.setItem('nil_question', q);
+            localStorage.setItem('nil_answer', a);
+            alert("Segurança configurada!");
         };
 
         window.recoverPassword = () => {
-            const question = localStorage.getItem('nil_question');
-            if (!question) return alert("Nenhuma pergunta secreta configurada.");
-            
-            const answer = prompt(`Pergunta: ${question}`);
-            if (answer && answer === localStorage.getItem('nil_answer')) {
-                alert(`Sua senha é: ${localStorage.getItem('nil_pass')}`);
-            } else {
-                alert("Resposta incorreta.");
-            }
+            const q = localStorage.getItem('nil_question');
+            if (!q) return alert("Sem pergunta configurada.");
+            const a = prompt(`Pergunta: ${q}`);
+            if (a === localStorage.getItem('nil_answer')) alert(`Sua senha é: ${localStorage.getItem('nil_pass')}`);
+            else alert("Incorreto.");
         };
 
         async function saveNote() {
@@ -149,22 +151,23 @@
             card.className = `px-3 py-2.5 rounded-lg border ${note.isGroup ? 'border-blue-600/50 bg-blue-900/5' : 'border-slate-900'} bg-slate-900/50 hover:border-slate-800 transition-all cursor-grab active:cursor-grabbing w-full relative group`;
             card.draggable = true;
 
-            // Drag and Drop Logic
             card.ondragstart = (e) => { draggedId = note.id; card.classList.add('dragging'); e.stopPropagation(); };
             card.ondragover = (e) => { e.preventDefault(); e.stopPropagation(); card.classList.add('drag-over-group'); };
             card.ondragleave = () => card.classList.remove('drag-over-group');
+            
             card.ondrop = async (e) => {
                 e.preventDefault(); e.stopPropagation();
                 card.classList.remove('drag-over-group');
                 if (draggedId === note.id) return;
+
                 if (note.isGroup) {
                     await updateDoc(doc(db, "notes", draggedId), { parentId: note.id });
                 } else {
-                    const groupName = prompt("Nome do Grupo:");
-                    if (groupName) {
-                        const groupDoc = await addDoc(colRef, { text: groupName, isGroup: true, locked: false, createdAt: Date.now(), parentId: null });
-                        await updateDoc(doc(db, "notes", note.id), { parentId: groupDoc.id });
-                        await updateDoc(doc(db, "notes", draggedId), { parentId: groupDoc.id });
+                    const name = prompt("Nome do Grupo:");
+                    if (name) {
+                        const g = await addDoc(colRef, { text: name, isGroup: true, locked: false, createdAt: Date.now(), parentId: null });
+                        await updateDoc(doc(db, "notes", note.id), { parentId: g.id });
+                        await updateDoc(doc(db, "notes", draggedId), { parentId: g.id });
                     }
                 }
             };
@@ -182,16 +185,14 @@
             card.innerHTML = `
                 <div class="flex items-start justify-between">
                     <div class="flex-1 overflow-hidden pr-2">
-                        <p class="note-content text-sm ${isNoteLocked ? 'text-slate-600 italic font-light' : 'text-slate-300'}">
-                            ${isNoteLocked ? '<i data-lucide="lock" class="inline w-3 h-3 mr-1"></i> Conteúdo Protegido' : note.text}
+                        <p class="note-content text-sm ${isNoteLocked ? 'text-slate-600 italic' : 'text-slate-300'}">
+                            ${isNoteLocked ? '<i data-lucide="lock" class="inline w-3 h-3 mr-1"></i> Protegido' : note.text}
                         </p>
                         <div class="text-[7px] text-slate-600 mt-0.5 uppercase tracking-tighter">${dateStr}</div>
                     </div>
                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="window.editNote('${note.id}', \`${note.text.replace(/`/g, '\\`')}\`)" class="p-1 text-slate-600 hover:text-green-500"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-                        <button onclick="window.tglLock('${note.id}', ${note.locked})" class="p-1 text-slate-600 hover:text-blue-500">
-                            <i data-lucide="${note.locked ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>
-                        </button>
+                        <button onclick="window.editNote('${note.id}', \`${note.text.replace(/`/g, '\\`')}\` || '')" class="p-1 text-slate-600 hover:text-green-500"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="window.tglLock('${note.id}', ${note.locked})" class="p-1 text-slate-600 hover:text-blue-500"><i data-lucide="${note.locked ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i></button>
                         <button onclick="window.delNote('${note.id}')" class="p-1 text-slate-600 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                     </div>
                 </div>
@@ -207,40 +208,22 @@
                 });
                 container.appendChild(subList);
             }
-
             return container;
         }
 
-        window.tglLock = async (id, currentStatus) => {
-            const savedPass = localStorage.getItem('nil_pass');
-            
-            // Se estiver tentando BLOQUEAR
-            if (!currentStatus) {
-                if (!savedPass) {
-                    alert("Configure uma senha no menu lateral antes de bloquear notas.");
-                    window.toggleAdmin();
-                    return;
-                }
+        window.tglLock = async (id, status) => {
+            const saved = localStorage.getItem('nil_pass');
+            if (!status) {
+                if (!saved) return (alert("Configure a senha no admin!"), window.toggleAdmin());
                 await updateDoc(doc(db, "notes", id), { locked: true });
                 revealedNotes.delete(id);
-            } 
-            // Se estiver tentando DESBLOQUEAR/VER
-            else {
-                const pass = prompt("Digite a senha para visualizar:");
-                if (pass === savedPass) {
-                    // Revela apenas para esta sessão
-                    revealedNotes.add(id);
-                    render(allNotesData);
-                } else {
-                    alert("Senha incorreta!");
-                }
+            } else {
+                if (prompt("Senha:") === saved) { revealedNotes.add(id); render(allNotesData); }
+                else alert("Erro!");
             }
         };
 
-        window.editNote = async (id, old) => { 
-            const n = prompt("Editar:", old); 
-            if(n) await updateDoc(doc(db, "notes", id), { text: n }); 
-        };
+        window.editNote = async (id, old) => { const n = prompt("Editar:", old); if(n) await updateDoc(doc(db, "notes", id), { text: n }); };
         window.delNote = async (id) => { if(confirm("Apagar?")) await deleteDoc(doc(db, "notes", id)); };
     </script>
 </body>
